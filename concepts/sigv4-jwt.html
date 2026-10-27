@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SigV4 vs JWT - AWS Concepts</title>
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<div class="container">
+    <aside>
+        <h1>Soma Mahapatra</h1>
+        <p>AWS integration engineer.</p>
+        <h2>AWS Concepts</h2>
+        <ul>
+            <li><a href="/concepts/cloudformation.html">CloudFormation</a></li>
+            <li><a href="/concepts/sigv4-jwt.html" class="active">SigV4 vs JWT</a></li>
+        </ul>
+        <h2>Contact</h2>
+        <ul>
+            <li><a href="https://github.com/somamahapatra1-eng" target="_blank">GitHub</a></li>
+        </ul>
+    </aside>
+
+    <main>
+        <h1>SigV4 vs JWT: Two Ways to Prove Identity</h1>
+
+        <h2>The Problem</h2>
+        <p>
+            An API needs to know who is calling it. Both SigV4 (AWS signature) and JWT (JSON Web Token) prove identity, but they work very differently.
+        </p>
+
+        <h2>SigV4: AWS Native Signing</h2>
+        <p>
+            SigV4 is AWS's request-signing protocol. The caller holds an AWS access key (like a username/password pair). Before sending the request, the caller computes a cryptographic signature of the request and includes it in the HTTP header. The API verifies that signature using AWS Identity and Access Management (IAM) and knows who made the request by looking up the access key.
+        </p>
+        <pre><code>Authorization: AWS4-HMAC-SHA256 Credential=AKIAIOSFODNN7EXAMPLE/20131124/us-east-1/s3/aws4_request, SignedHeaders=host;range;x-amz-content-sha256, Signature=...</code></pre>
+
+        <p><strong>Who it works for:</strong></p>
+        <ul style="margin-left: 2rem; margin-bottom: 1rem;">
+            <li>AWS services calling each other (Lambda → S3)</li>
+            <li>IAM users or roles (a service inside AWS, or a human with an access key)</li>
+            <li>IAM Roles Anywhere (a machine outside AWS with a certificate; it assumes an IAM role and signs requests)</li>
+        </ul>
+
+        <div class="note">
+            <strong>In a Lambda:</strong> The Lambda has an execution role. That role has AWS credentials automatically. When the Lambda calls SQS or S3, boto3 signs the request with SigV4 using the role's credentials. The service verifies it and allows the call.
+        </div>
+
+        <h2>JWT: Stateless Identity Token</h2>
+        <p>
+            JWT is a token-based protocol. A user logs in to an identity provider (like Cognito or Okta) with a username and password. The provider issues a JWT — a signed JSON object that says "I certify that this person is user@example.com and their email is verified." The token is valid for a time (e.g., 1 hour). The user then sends the JWT to the API in an HTTP header.
+        </p>
+        <pre><code>Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c</code></pre>
+
+        <p><strong>Who it works for:</strong></p>
+        <ul style="margin-left: 2rem; margin-bottom: 1rem;">
+            <li>End users (a person logging into a web or mobile app)</li>
+            <li>Third-party services that have a user account with you</li>
+            <li>Any client that can store a token in memory or a cookie</li>
+        </ul>
+
+        <div class="note">
+            <strong>In API Gateway:</strong> Configure a Cognito authorizer. API Gateway validates the JWT signature and extracts claims like <code>cognito:username</code>. The Lambda receives the claims in <code>event.requestContext.authorizer.claims</code>.
+        </div>
+
+        <h2>Side-by-Side Comparison</h2>
+        <table>
+            <tr>
+                <th>Feature</th>
+                <th>SigV4</th>
+                <th>JWT</th>
+            </tr>
+            <tr>
+                <td>Credential type</td>
+                <td>AWS access key (ID + secret)</td>
+                <td>Token (looks like a random string)</td>
+            </tr>
+            <tr>
+                <td>Who issues it</td>
+                <td>AWS IAM (built-in)</td>
+                <td>Identity provider (Cognito, Okta, Auth0)</td>
+            </tr>
+            <tr>
+                <td>Verification</td>
+                <td>API calls AWS IAM to verify</td>
+                <td>API checks the token signature locally</td>
+            </tr>
+            <tr>
+                <td>Caller identity</td>
+                <td>Assumed-role ARN (e.g., <code>arn:aws:sts::123456789012:assumed-role/my-role/session-name</code>)</td>
+                <td>Claims in the JWT (e.g., <code>sub</code>, <code>email</code>, <code>groups</code>)</td>
+            </tr>
+            <tr>
+                <td>Best for</td>
+                <td>Service-to-service, machines, things with AWS credentials</td>
+                <td>End users, external clients, time-limited access</td>
+            </tr>
+            <tr>
+                <td>Revocation</td>
+                <td>Immediate (delete/rotate the access key)</td>
+                <td>Delayed (token valid until it expires)</td>
+            </tr>
+        </table>
+
+        <h2>In Practice: One Lambda, Two Callers</h2>
+        <p>
+            The same Lambda can accept both. API Gateway runs two authorizers in parallel and the Lambda receives whichever one succeeded.
+        </p>
+        <pre><code>def identify_caller(event):
+    request_context = event.get("requestContext", {})
+    authorizer = request_context.get("authorizer", {})
+    
+    # JWT path: Cognito authorizer populated claims
+    username = authorizer.get("claims", {}).get("cognito:username")
+    if username:
+        return {"method": "jwt", "caller": username}
+    
+    # SigV4 path: IAM authorizer populated the assumed-role ARN
+    user_arn = request_context.get("identity", {}).get("userArn")
+    if user_arn:
+        return {"method": "sigv4", "caller": user_arn}
+    
+    raise PermissionError("No valid credentials")</code></pre>
+
+        <div class="link-box">
+            <strong>Full implementation:</strong><br>
+            See <a href="https://github.com/somamahapatra1-eng/harbor-events-sample/blob/main/src/router.py">harbor-events-sample/src/router.py</a> and <a href="https://github.com/somamahapatra1-eng/harbor-events-sample/blob/main/templates/shared.yaml">shared.yaml</a> (two authorizers configured on the same API).
+        </div>
+
+        <h2>When to Choose Which</h2>
+        <p><strong>Use SigV4 if:</strong></p>
+        <ul style="margin-left: 2rem; margin-bottom: 1rem;">
+            <li>The caller is a Lambda, ECS task, or another AWS service</li>
+            <li>The caller is outside AWS but has AWS credentials (IAM Roles Anywhere)</li>
+            <li>You want immediate revocation</li>
+            <li>The caller cannot manage JWTs</li>
+        </ul>
+
+        <p><strong>Use JWT if:</strong></p>
+        <ul style="margin-left: 2rem; margin-bottom: 1rem;">
+            <li>The caller is a human or external service</li>
+            <li>You want to delegate authentication to a separate provider</li>
+            <li>The token needs custom claims (e.g., department, role)</li>
+            <li>You want stateless verification (API doesn't call IAM on every request)</li>
+        </ul>
+    </main>
+</div>
+</body>
+</html>

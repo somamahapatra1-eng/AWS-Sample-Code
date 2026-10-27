@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Soma Mahapatra - AWS Integration & Multi-Tenant Architecture</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #fafbfc;
+        }
+        .container {
+            display: flex;
+            min-height: 100vh;
+        }
+        aside {
+            width: 250px;
+            background: #fff;
+            border-right: 1px solid #e1e4e8;
+            padding: 2rem 1.5rem;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            box-shadow: 0 0 8px rgba(0,0,0,0.05);
+        }
+        aside h1 {
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+        aside p {
+            font-size: 0.85rem;
+            color: #666;
+            margin-bottom: 2rem;
+            line-height: 1.4;
+        }
+        aside h2 {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            color: #999;
+            margin: 1.5rem 0 0.75rem 0;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+        aside ul {
+            list-style: none;
+        }
+        aside li {
+            margin: 0.5rem 0;
+        }
+        aside a {
+            text-decoration: none;
+            color: #0366d6;
+            font-size: 0.9rem;
+            transition: color 0.2s;
+            display: block;
+            padding: 0.25rem 0;
+        }
+        aside a:hover {
+            color: #6f42c1;
+        }
+        aside a.active {
+            color: #6f42c1;
+            font-weight: 600;
+            border-left: 2px solid #6f42c1;
+            padding-left: 8px;
+        }
+        main {
+            margin-left: 250px;
+            padding: 3rem;
+            flex: 1;
+            max-width: 900px;
+        }
+        h1 {
+            margin-bottom: 2rem;
+            color: #24292e;
+            font-size: 2rem;
+            border-bottom: 2px solid #e1e4e8;
+            padding-bottom: 0.5rem;
+        }
+        h2 {
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+            color: #24292e;
+            font-size: 1.3rem;
+        }
+        p {
+            margin-bottom: 1rem;
+            color: #555;
+        }
+        code {
+            background: #f6f8fa;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: "Monaco", "Courier New", monospace;
+            font-size: 0.9em;
+            color: #d73a49;
+        }
+        pre {
+            background: #f6f8fa;
+            border: 1px solid #e1e4e8;
+            border-radius: 6px;
+            padding: 1rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-size: 0.85rem;
+            line-height: 1.45;
+        }
+        pre code {
+            background: none;
+            padding: 0;
+            color: #24292e;
+        }
+        .note {
+            background: #f6f8fa;
+            border-left: 4px solid #0366d6;
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 3px;
+        }
+        .note strong {
+            color: #0366d6;
+        }
+        .link-box {
+            background: #fff;
+            border: 1px solid #e1e4e8;
+            padding: 1rem;
+            border-radius: 6px;
+            margin: 1rem 0;
+        }
+        .link-box a {
+            color: #0366d6;
+            text-decoration: none;
+        }
+        .link-box a:hover {
+            text-decoration: underline;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+        }
+        th, td {
+            border: 1px solid #e1e4e8;
+            padding: 0.75rem;
+            text-align: left;
+        }
+        th {
+            background: #f6f8fa;
+            font-weight: 600;
+        }
+        .hero {
+            margin-bottom: 2rem;
+        }
+        .hero h1 {
+            font-size: 2.5rem;
+            border: none;
+            margin-bottom: 0.5rem;
+        }
+        .hero .tagline {
+            font-size: 1.1rem;
+            color: #666;
+            margin-bottom: 2rem;
+        }
+        .links {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        .links a {
+            color: #0366d6;
+            text-decoration: none;
+        }
+        .links a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <aside>
+        <h1>Soma Mahapatra</h1>
+        <p>AWS integration engineer. Multi-tenant APIs, cloud infrastructure, CI/CD pipelines.</p>
+        
+        <h2>AWS Concepts</h2>
+        <ul>
+            <li><a href="concepts/cloudformation.html">CloudFormation</a></li>
+            <li><a href="concepts/iam.html">IAM Policies & Conditions</a></li>
+            <li><a href="concepts/iam-roles-anywhere.html">IAM Roles Anywhere</a></li>
+            <li><a href="concepts/api-gateway.html">API Gateway</a></li>
+            <li><a href="concepts/cognito.html">Amazon Cognito</a></li>
+            <li><a href="concepts/sigv4-jwt.html">SigV4 vs JWT</a></li>
+            <li><a href="concepts/sqs.html">Amazon SQS</a></li>
+            <li><a href="concepts/lambda.html">AWS Lambda</a></li>
+            <li><a href="concepts/appconfig.html">AWS AppConfig</a></li>
+            <li><a href="concepts/s3.html">Amazon S3</a></li>
+            <li><a href="concepts/sns.html">Amazon SNS</a></li>
+            <li><a href="concepts/vpc-endpoints.html">VPC Endpoints</a></li>
+            <li><a href="concepts/codebuild.html">AWS CodeBuild</a></li>
+            <li><a href="concepts/codepipeline.html">AWS CodePipeline</a></li>
+            <li><a href="concepts/multi-tenant.html">Multi-Tenant Design</a></li>
+        </ul>
+
+        <h2>CI/CD Topics</h2>
+        <ul>
+            <li><a href="cicd/docker-multiarch.html">Multi-Arch Docker Images</a></li>
+            <li><a href="cicd/qemu-runners.html">QEMU & Runners</a></li>
+            <li><a href="cicd/packaging-s3.html">Packaging & S3 Upload</a></li>
+        </ul>
+
+        <h2>Projects</h2>
+        <ul>
+            <li><a href="https://github.com/somamahapatra1-eng/harbor-events-sample" target="_blank">harbor-events-sample</a></li>
+            <li><a href="https://github.com/somamahapatra1-eng/multiarch-image-ci" target="_blank">multiarch-image-ci</a></li>
+            <li><a href="https://github.com/somamahapatra1-eng/somamahapatra1-eng" target="_blank">Profile</a></li>
+        </ul>
+
+        <h2>Contact</h2>
+        <ul>
+            <li><a href="https://github.com/somamahapatra1-eng" target="_blank">GitHub</a></li>
+            <li><a href="mailto:somamahapatra1@gmail.com">Email</a></li>
+        </ul>
+    </aside>
+
+    <main>
+        <div class="hero">
+            <h1>AWS Integration & Multi-Tenant Architecture</h1>
+            <p class="tagline">Technical deep-dive: designing APIs, managing multi-tenant stacks, CI/CD pipelines, and cloud infrastructure patterns.</p>
+            <div class="links">
+                <a href="https://github.com/somamahapatra1-eng">→ GitHub</a>
+                <a href="mailto:somamahapatra1@gmail.com">→ Email</a>
+            </div>
+        </div>
+
+        <h2>What This Site Covers</h2>
+        <p>
+            This portfolio walks through 15 AWS and CI/CD concepts with code samples. Each page includes:
+        </p>
+        <ul style="margin-left: 2rem; margin-bottom: 1rem;">
+            <li><strong>Core concept</strong> — What the service does and why it matters</li>
+            <li><strong>Code sample</strong> — A small snippet showing how it's used</li>
+            <li><strong>Full reference</strong> — Link to the complete implementation in a public sample project</li>
+            <li><strong>When to use it</strong> — Real-world patterns and gotchas</li>
+        </ul>
+
+        <h2>Sample Projects</h2>
+        <p>
+            All concepts are demonstrated in two production-inspired samples:
+        </p>
+        <div class="link-box">
+            <strong><a href="https://github.com/somamahapatra1-eng/harbor-events-sample">harbor-events-sample</a></strong><br>
+            A fictional multi-tenant event API on AWS. One shared API, one role per tenant, CloudFormation nested stacks, AppConfig routing, and a CodePipeline that deploys to two regions.
+        </div>
+        <div class="link-box">
+            <strong><a href="https://github.com/somamahapatra1-eng/multiarch-image-ci">multiarch-image-ci</a></strong><br>
+            A cloud-agnostic GitLab pipeline that builds container images for both linux/amd64 and linux/arm64 in parallel and publishes one manifest tag.
+        </div>
+
+        <h2>Start Reading</h2>
+        <p>
+            Pick a concept from the sidebar on the left. Or start with:
+        </p>
+        <ul style="margin-left: 2rem; margin-bottom: 1rem;">
+            <li><a href="concepts/multi-tenant.html">Multi-Tenant Design</a> for architecture overview</li>
+            <li><a href="concepts/cloudformation.html">CloudFormation</a> for infrastructure as code</li>
+            <li><a href="concepts/sigv4-jwt.html">SigV4 vs JWT</a> for authentication patterns</li>
+            <li><a href="cicd/docker-multiarch.html">Multi-Arch Docker Images</a> for CI/CD</li>
+        </ul>
+    </main>
+</div>
+</body>
+</html>

@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CloudFormation - AWS Concepts</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #fafbfc;
+        }
+        .container {
+            display: flex;
+            min-height: 100vh;
+        }
+        aside {
+            width: 250px;
+            background: #fff;
+            border-right: 1px solid #e1e4e8;
+            padding: 2rem 1.5rem;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            box-shadow: 0 0 8px rgba(0,0,0,0.05);
+        }
+        aside h1 {
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+        aside p {
+            font-size: 0.85rem;
+            color: #666;
+            margin-bottom: 2rem;
+            line-height: 1.4;
+        }
+        aside h2 {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            color: #999;
+            margin: 1.5rem 0 0.75rem 0;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+        aside ul {
+            list-style: none;
+        }
+        aside li {
+            margin: 0.5rem 0;
+        }
+        aside a {
+            text-decoration: none;
+            color: #0366d6;
+            font-size: 0.9rem;
+            transition: color 0.2s;
+            display: block;
+            padding: 0.25rem 0;
+        }
+        aside a:hover {
+            color: #6f42c1;
+        }
+        aside a.active {
+            color: #6f42c1;
+            font-weight: 600;
+            border-left: 2px solid #6f42c1;
+            padding-left: 8px;
+        }
+        main {
+            margin-left: 250px;
+            padding: 3rem;
+            flex: 1;
+            max-width: 900px;
+        }
+        h1 {
+            margin-bottom: 2rem;
+            color: #24292e;
+            font-size: 2rem;
+            border-bottom: 2px solid #e1e4e8;
+            padding-bottom: 0.5rem;
+        }
+        h2 {
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+            color: #24292e;
+            font-size: 1.3rem;
+        }
+        p {
+            margin-bottom: 1rem;
+            color: #555;
+        }
+        code {
+            background: #f6f8fa;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: "Monaco", "Courier New", monospace;
+            font-size: 0.9em;
+            color: #d73a49;
+        }
+        pre {
+            background: #f6f8fa;
+            border: 1px solid #e1e4e8;
+            border-radius: 6px;
+            padding: 1rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-size: 0.85rem;
+            line-height: 1.45;
+        }
+        pre code {
+            background: none;
+            padding: 0;
+            color: #24292e;
+        }
+        .note {
+            background: #f6f8fa;
+            border-left: 4px solid #0366d6;
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 3px;
+        }
+        .link-box {
+            background: #fff;
+            border: 1px solid #e1e4e8;
+            padding: 1rem;
+            border-radius: 6px;
+            margin: 1rem 0;
+        }
+        .link-box a {
+            color: #0366d6;
+            text-decoration: none;
+        }
+        .link-box a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <aside>
+        <h1>Soma Mahapatra</h1>
+        <p>AWS integration engineer. Multi-tenant APIs, cloud infrastructure, CI/CD pipelines.</p>
+        
+        <h2>AWS Concepts</h2>
+        <ul>
+            <li><a href="/concepts/cloudformation.html" class="active">CloudFormation</a></li>
+            <li><a href="/concepts/iam.html">IAM Policies & Conditions</a></li>
+            <li><a href="/concepts/iam-roles-anywhere.html">IAM Roles Anywhere</a></li>
+            <li><a href="/concepts/api-gateway.html">API Gateway</a></li>
+            <li><a href="/concepts/cognito.html">Amazon Cognito</a></li>
+            <li><a href="/concepts/sigv4-jwt.html">SigV4 vs JWT</a></li>
+            <li><a href="/concepts/sqs.html">Amazon SQS</a></li>
+            <li><a href="/concepts/lambda.html">AWS Lambda</a></li>
+            <li><a href="/concepts/appconfig.html">AWS AppConfig</a></li>
+            <li><a href="/concepts/s3.html">Amazon S3</a></li>
+            <li><a href="/concepts/sns.html">Amazon SNS</a></li>
+            <li><a href="/concepts/vpc-endpoints.html">VPC Endpoints</a></li>
+            <li><a href="/concepts/codebuild.html">AWS CodeBuild</a></li>
+            <li><a href="/concepts/codepipeline.html">AWS CodePipeline</a></li>
+            <li><a href="/concepts/multi-tenant.html">Multi-Tenant Design</a></li>
+        </ul>
+
+        <h2>CI/CD Topics</h2>
+        <ul>
+            <li><a href="/cicd/docker-multiarch.html">Multi-Arch Docker Images</a></li>
+            <li><a href="/cicd/qemu-runners.html">QEMU & Runners</a></li>
+            <li><a href="/cicd/packaging-s3.html">Packaging & S3 Upload</a></li>
+        </ul>
+
+        <h2>Projects</h2>
+        <ul>
+            <li><a href="https://github.com/somamahapatra1-eng/harbor-events-sample" target="_blank">harbor-events-sample</a></li>
+            <li><a href="https://github.com/somamahapatra1-eng/multiarch-image-ci" target="_blank">multiarch-image-ci</a></li>
+            <li><a href="https://github.com/somamahapatra1-eng/somamahapatra1-eng" target="_blank">Profile</a></li>
+        </ul>
+
+        <h2>Contact</h2>
+        <ul>
+            <li><a href="https://github.com/somamahapatra1-eng" target="_blank">GitHub</a></li>
+            <li><a href="mailto:somamahapatra1@gmail.com">Email</a></li>
+        </ul>
+    </aside>
+
+    <main>
+        <h1>CloudFormation: Infrastructure as Code</h1>
+
+        <h2>What It Does</h2>
+        <p>
+            CloudFormation is AWS's declarative infrastructure language. You write YAML or JSON templates that describe your infrastructure, and CloudFormation creates, updates, and deletes the resources as one unit. No more clicking the console.
+        </p>
+        <p>
+            A <code>stack</code> is one deployment. A <code>nested stack</code> is a stack that creates other stacks, letting you build reusable components.
+        </p>
+
+        <h2>Core Features</h2>
+        <ul style="margin-left: 2rem; margin-bottom: 1rem;">
+            <li><strong>Mappings</strong> — Lookup tables. Map region → availability zones, or env → instance size.</li>
+            <li><strong>Parameters</strong> — User inputs. <code>TenantId</code>, <code>Environment</code>, etc.</li>
+            <li><strong>Conditions</strong> — If/then logic. <code>if prod then retain data else delete</code>.</li>
+            <li><strong>Fn::Sub</strong> — String interpolation. <code>${Variable}</code> inside values.</li>
+            <li><strong>Fn::GetAtt</strong> — Get outputs from a resource. The queue URL, the role ARN.</li>
+            <li><strong>Fn::FindInMap</strong> — Lookup a mapping. <code>FindInMap [RegionConfig, us-east-1, QueueSuffix]</code>.</li>
+        </ul>
+
+        <h2>Simple Example</h2>
+        <pre><code>AWSTemplateFormatVersion: "2010-09-09"
+
+Parameters:
+  TenantId:
+    Type: String
+    Default: acme
+
+Mappings:
+  RegionConfig:
+    us-east-1:
+      QueueName: acme-queue-use1
+    eu-west-1:
+      QueueName: acme-queue-euw1
+
+Resources:
+  Queue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: !FindInMap [RegionConfig, !Ref "AWS::Region", QueueName]
+
+Outputs:
+  QueueUrl:
+    Value: !Ref Queue
+  QueueArn:
+    Value: !GetAtt Queue.Arn</code></pre>
+
+        <div class="note">
+            <strong>Key intrinsic functions:</strong>
+            <br>
+            <code>!Ref Parameter</code> — The parameter value.<br>
+            <code>!GetAtt Resource.Property</code> — An output from the resource.<br>
+            <code>!Sub "${VarName}"</code> — String with variables replaced.<br>
+            <code>!FindInMap [Map, TopKey, SecondKey]</code> — Lookup from a mapping.
+        </div>
+
+        <h2>Nested Stacks</h2>
+        <p>
+            Call another template as a resource. The root stack passes parameters to the nested stack and receives outputs.
+        </p>
+        <pre><code>  TenantStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: https://example.com/tenant.yaml
+      Parameters:
+        TenantId: !Ref TenantId
+        QueueArn: !GetAtt Shared.Outputs.QueueArn
+
+  Outputs:
+    TenantQueueUrl:
+      Value: !GetAtt TenantStack.Outputs.QueueUrl</code></pre>
+
+        <h2>Conditions for Multi-Environment</h2>
+        <pre><code>Conditions:
+  IsProduction: !Equals [!Ref Environment, prod]
+
+Resources:
+  Bucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: !If [IsProduction, Retain, Delete]
+
+  BucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Condition: !If [IsProduction, true, false]
+    Properties:
+      ...</code></pre>
+
+        <h2>When to Use</h2>
+        <p>
+            CloudFormation is best for:
+        </p>
+        <ul style="margin-left: 2rem; margin-bottom: 1rem;">
+            <li>Multi-tenant stacks where each tenant gets similar resources (role, queue, bucket prefix)</li>
+            <li>Repeatable deployments across regions</li>
+            <li>Infrastructure that must be version-controlled and reviewable</li>
+            <li>DevOps pipelines where infrastructure changes are tracked</li>
+        </ul>
+
+        <div class="link-box">
+            <strong>Full implementation:</strong><br>
+            See <a href="https://github.com/somamahapatra1-eng/harbor-events-sample/tree/main/templates">harbor-events-sample/templates</a> for:<br>
+            • <code>main.yaml</code> — Root stack with nested tenant stacks<br>
+            • <code>tenant.yaml</code> — Reusable per-tenant template<br>
+            • <code>shared.yaml</code> — API, Lambda, AppConfig, and S3
+        </div>
+
+        <h2>Key Gotchas</h2>
+        <ul style="margin-left: 2rem; margin-bottom: 1rem;">
+            <li><strong>TemplateURL must be HTTPS</strong> — Publish templates to S3 with a public or signed URL.</li>
+            <li><strong>Stack names are immutable</strong> — You cannot rename a stack; you must create a new one.</li>
+            <li><strong>Circular dependencies</strong> — If a nested stack outputs something the parent needs for a parameter, use <code>Fn::GetAtt</code> on the nested stack instead.</li>
+            <li><strong>DeletionPolicy</strong> — By default, CloudFormation deletes S3 buckets and RDS instances. Use <code>Retain</code> for production data.</li>
+        </ul>
+    </main>
+</div>
+</body>
+</html>

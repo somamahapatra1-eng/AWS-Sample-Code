@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Packaging & S3 Upload - CI/CD Concepts</title>
+</head>
+<body>
+<div class="container">
+    <main>
+        <h1>Packaging Code and Uploading to S3</h1>
+
+        <h2>Why Package?</h2>
+        <p>
+            Lambda, CodeBuild, and CodePipeline cannot clone a Git repo and run code directly. You must package your code into a ZIP file and upload it to S3. CloudFormation then pulls that ZIP, extracts it, and deploys it.
+        </p>
+
+        <h2>What Gets Zipped</h2>
+        <p>
+            For a Lambda, the ZIP must have the handler function at the root:
+        </p>
+        <pre><code>router.zip
+├── router.py         ← handler module at the root
+├── lib/
+│   └── helper.py
+└── config.json</code></pre>
+
+        <p>
+            If the handler is not at the root, Lambda cannot find it. The ZIP structure matters.
+        </p>
+
+        <h2>PowerShell Packaging</h2>
+        <pre><code>$root = Split-Path -Parent $PSScriptRoot
+$destDir = Join-Path $root "dist"
+$dest = Join-Path $destDir "router.zip"
+New-Item -ItemType Directory -Force -Path $destDir | Out-Null
+if (Test-Path $dest) { Remove-Item $dest }
+Compress-Archive -Path (Join-Path $root "src\router.py") -DestinationPath $dest
+Write-Output $dest</code></pre>
+
+        <div class="note">
+            <strong>With dependencies:</strong> Include the full directory:<br>
+            <code>Compress-Archive -Path (Join-Path $root "src\*") -DestinationPath $dest</code>
+        </div>
+
+        <h2>Upload to S3</h2>
+        <p>
+            Store the ZIP in an S3 bucket that CloudFormation can read.
+        </p>
+        <pre><code>aws s3 cp dist/router.zip s3://my-artifacts-bucket/router.zip
+aws s3 cp dist/router.zip s3://my-artifacts-bucket/router-$(git rev-parse --short HEAD).zip</code></pre>
+
+        <h2>CloudFormation Lambda Code Reference</h2>
+        <pre><code>Resources:
+  Router:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: my-router
+      Runtime: python3.12
+      Handler: router.handler
+      Role: !GetAtt RouterRole.Arn
+      Code:
+        S3Bucket: my-artifacts-bucket
+        S3Key: router.zip</code></pre>
+
+        <div class="note">
+            <strong>S3 bucket must be in the same region as the Lambda.</strong> CodePipeline handles cross-region copies automatically.
+        </div>
+
+        <h2>CodePipeline with Artifacts</h2>
+        <p>
+            CodePipeline stages pass artifacts to each other through S3. A Source stage outputs a ZIP of your repo. A Build stage (CodeBuild) runs and outputs a new artifact (the packaged code). A Deploy stage takes that artifact and feeds it to CloudFormation.
+        </p>
+        <pre><code>Stages:
+  - Name: Source
+    Actions:
+      - Name: SourceZip
+        ActionTypeId:
+          Provider: S3
+        Configuration:
+          S3Bucket: my-source-bucket
+          S3ObjectKey: source.zip
+        OutputArtifacts:
+          - Name: SourceOutput
+
+  - Name: Build
+    Actions:
+      - Name: Package
+        ActionTypeId:
+          Provider: CodeBuild
+        InputArtifacts:
+          - Name: SourceOutput
+        OutputArtifacts:
+          - Name: BuildOutput
+
+  - Name: Deploy
+    Actions:
+      - Name: CreateChangeSet
+        ActionTypeId:
+          Provider: CloudFormation
+        InputArtifacts:
+          - Name: BuildOutput
+        Configuration:
+          TemplatePath: BuildOutput::templates/main.yaml</code></pre>
+
+        <h2>CodeBuild buildspec.yml</h2>
+        <p>
+            The build job unzips the source, runs tests, packages the code, and uploads the result.
+        </p>
+        <pre><code>version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      python: 3.12
+
+  pre_build:
+    commands:
+      - python -m unittest discover -s tests -v
+
+  build:
+    commands:
+      - mkdir -p dist
+      - cd src && zip -r ../dist/router.zip router.py && cd ..
+      - aws s3 cp dist/router.zip s3://$ARTIFACT_BUCKET/router.zip
+
+  post_build:
+    commands:
+      - echo "Package complete"
+
+artifacts:
+  files:
+    - templates/**/*
+    - dist/router.zip
+  discard-paths: yes
