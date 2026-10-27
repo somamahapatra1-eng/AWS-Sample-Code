@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>App Insights - Azure Concepts</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #fafbfc;
+        }
+        .container { display: flex; min-height: 100vh; }
+        aside {
+            width: 250px;
+            background: #fff;
+            border-right: 1px solid #e1e4e8;
+            padding: 2rem 1.5rem;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+        }
+        aside h1 { font-size: 1.1rem; margin-bottom: 0.5rem; font-weight: 600; }
+        aside h2 {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            color: #999;
+            margin: 1.5rem 0 0.75rem 0;
+            font-weight: 600;
+        }
+        aside ul { list-style: none; }
+        aside a {
+            text-decoration: none;
+            color: #0366d6;
+            font-size: 0.9rem;
+            display: block;
+            padding: 0.25rem 0;
+        }
+        aside a.active {
+            color: #6f42c1;
+            font-weight: 600;
+            border-left: 2px solid #6f42c1;
+            padding-left: 8px;
+        }
+        main { margin-left: 250px; padding: 3rem; flex: 1; max-width: 900px; }
+        h1 { margin-bottom: 2rem; color: #24292e; font-size: 2rem; border-bottom: 2px solid #e1e4e8; padding-bottom: 0.5rem; }
+        h2 { margin-top: 2rem; margin-bottom: 1rem; color: #24292e; font-size: 1.3rem; }
+        p { margin-bottom: 1rem; color: #555; }
+        code {
+            background: #f6f8fa;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: "Monaco", "Courier New", monospace;
+            font-size: 0.9em;
+            color: #d73a49;
+        }
+        pre {
+            background: #f6f8fa;
+            border: 1px solid #e1e4e8;
+            border-radius: 6px;
+            padding: 1rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-size: 0.85rem;
+            line-height: 1.45;
+        }
+        pre code { background: none; padding: 0; color: #24292e; }
+        .note {
+            background: #f6f8fa;
+            border-left: 4px solid #0366d6;
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 3px;
+        }
+        .link-box {
+            background: #fff;
+            border: 1px solid #e1e4e8;
+            padding: 1rem;
+            border-radius: 6px;
+            margin: 1rem 0;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <aside>
+        <h1>Soma Mahapatra</h1>
+        <h2>Azure Concepts</h2>
+        <ul>
+            <li><a href="/concepts/azure-function-app.html">Azure Function App</a></li>
+            <li><a href="/concepts/app-insights.html" class="active">App Insights</a></li>
+            <li><a href="/concepts/aks.html">AKS</a></li>
+        </ul>
+    </aside>
+
+    <main>
+        <h1>Application Insights: Monitoring & Observability</h1>
+
+        <h2>What It Does</h2>
+        <p>
+            Application Insights is Azure's observability service. Your application sends telemetry (logs, metrics, traces, exceptions) to App Insights, and you query it to understand what the app is doing and why it failed.
+        </p>
+        <p>
+            It works with Functions, App Service, AKS, and any app that imports the SDK and sends events.
+        </p>
+
+        <h2>Three Pillars of Observability</h2>
+        <ul style="margin-left: 2rem; margin-bottom: 1rem;">
+            <li><strong>Metrics</strong> — Numbers over time. Request count, latency, CPU, memory. Aggregate only.</li>
+            <li><strong>Logs</strong> — Individual events. Every request, error, custom message. Store the full context.</li>
+            <li><strong>Traces</strong> — Distributed traces. Follow one request across multiple services. See timing at each hop.</li>
+        </ul>
+
+        <h2>Terraform: Create App Insights</h2>
+        <pre><code>resource "azurerm_application_insights" "main" {
+  name                = "appinsights-prod"
+  location            = azurerm_resource_group.main.location
+  resource_group_name = azurerm_resource_group.main.name
+  application_type    = "web"
+  retention_in_days   = 30
+}
+
+# Link to Function App
+resource "azurerm_function_app" "main" {
+  # ... other config ...
+
+  app_settings = {
+    APPINSIGHTS_INSTRUMENTATIONKEY = azurerm_application_insights.main.instrumentation_key
+    APPLICATIONINSIGHTS_CONNECTION_STRING = azurerm_application_insights.main.connection_string
+  }
+}</code></pre>
+
+        <h2>Send Custom Events from Python</h2>
+        <pre><code>from opencensus.ext.azure.log_exporter import AzureLogHandler
+import logging
+
+# Configure logging
+logger = logging.getLogger(__name__)
+logger.addHandler(AzureLogHandler())
+logger.setLevel(logging.INFO)
+
+def main(req):
+    tenant_id = req.get_json().get("tenantId")
+    
+    # Log custom event
+    logger.info(f"Processing tenant {tenant_id}", extra={
+        "custom_dimensions": {
+            "tenant_id": tenant_id,
+            "user": req.headers.get("X-User-ID"),
+            "timestamp": datetime.now().isoformat()
+        }
+    })
+    
+    try:
+        result = process_tenant(tenant_id)
+    except Exception as e:
+        logger.exception(f"Failed to process tenant {tenant_id}")
+        raise
+    
+    return func.HttpResponse(json.dumps(result), status_code=200)</code></pre>
+
+        <h2>Query Logs with KQL</h2>
+        <p>
+            Use Kusto Query Language (KQL) to search App Insights. In the Azure portal, open App Insights → Logs and run queries.
+        </p>
+        <pre><code>// Find slow requests
+requests
+| where duration > 5000
+| summarize count() by bin(timestamp, 1m), name
+| render timechart
+
+// Exceptions in the last hour
+exceptions
+| where timestamp > ago(1h)
+| project timestamp, problem_id, detail = tostring(details.["Exception Info"].Value)</code></pre>
+
+        <h2>Alerts</h2>
+        <p>
+            Set up alerts so you're notified when something breaks.
+        </p>
+        <pre><code>resource "azurerm_monitor_metric_alert" "high_latency" {
+  name                = "alert-high-latency"
+  resource_group_name = azurerm_resource_group.main.name
+  scopes              = [azurerm_application_insights.main.id]
+  description         = "Alert when response time > 5s"
+  severity            = 2
+  enabled             = true
+  frequency           = "PT1M"
+  window_size         = "PT5M"
+
+  criteria {
+    metric_name      = "requests/duration"
+    metric_namespace = "microsoft.insights/components"
+    aggregation      = "Average"
+    operator         = "GreaterThan"
+    threshold        = 5000 # milliseconds
+  }
+
+  action {
+    action_group_id = azurerm_monitor_action_group.main.id
+  }
+}</code></pre>
+
+        <h2>Distributed Tracing</h2>
+        <p>
+            If a Function calls another Function or an API, set the correlation ID so you can follow the full request path.
+        </p>
+        <pre><code>from opencensus.trace.tracer import Tracer
+from opencensus.ext.azure.trace_exporter import AzureExporter
+
+tracer = Tracer(exporter=AzureExporter(connection_string=connection_string))
+
+def main(req):
+    with tracer.span(name="process_tenant") as span:
+        span.add_attribute("tenant_id", tenant_id)
+        
+        # Call another service
+        response = call_downstream_api(tenant_id)
+        
+        span.add_attribute("downstream_status", response.status_code)
+    
+    return func.HttpResponse("OK")</code></pre>
+
+        <div class="note">
+            <strong>Retention:</strong> By default, App Insights keeps logs for 30 days. Pay extra for longer retention.<br>
+            <strong>Sampling:</strong> On high volume, App Insights samples (e.g., 10% of events) to control cost.
+        </div>
+
+        <h2>When to Use</h2>
+        <p>
+            Use App Insights if:
+        </p>
+        <ul style="margin-left: 2rem; margin-bottom: 1rem;">
+            <li>You need observability for Azure services (Functions, App Service, AKS)</li>
+            <li>You want a managed solution (no self-hosted infrastructure)</li>
+            <li>You need KQL queries and dashboards in the Azure portal</li>
+        </ul>
+
+        <p>
+            Consider alternatives if:
+        </p>
+        <ul style="margin-left: 2rem; margin-bottom: 1rem;">
+            <li>Your apps are not on Azure (use Datadog, New Relic, Honeycomb)</li>
+            <li>You prefer open standards (use Prometheus + Grafana, or OpenTelemetry)</li>
+            <li>Cost is critical at high volume (self-hosted ELK stack)</li>
+        </ul>
+    </main>
+</div>
+</body>
+</html>

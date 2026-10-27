@@ -204,6 +204,13 @@
             <li><a href="concepts/multi-tenant.html">Multi-Tenant Design</a></li>
         </ul>
 
+        <h2>Azure Concepts</h2>
+        <ul>
+            <li><a href="concepts/azure-function-app.html">Azure Function App</a></li>
+            <li><a href="concepts/app-insights.html">App Insights</a></li>
+            <li><a href="concepts/aks.html">AKS</a></li>
+        </ul>
+
         <h2>CI/CD Topics</h2>
         <ul>
             <li><a href="cicd/docker-multiarch.html">Multi-Arch Docker Images</a></li>
@@ -259,13 +266,46 @@
             A cloud-agnostic GitLab pipeline that builds container images for both linux/amd64 and linux/arm64 in parallel and publishes one manifest tag.
         </div>
 
+        <h2>AWS vs Azure</h2>
+        <p>
+            AWS and Azure offer similar services with different names and approaches. This portfolio covers both:
+        </p>
+        <table style="width: 100%; margin: 1rem 0; border-collapse: collapse;">
+            <tr style="border-bottom: 1px solid #e1e4e8;">
+                <th style="text-align: left; padding: 0.5rem;">Service Type</th>
+                <th style="text-align: left; padding: 0.5rem;">AWS</th>
+                <th style="text-align: left; padding: 0.5rem;">Azure</th>
+            </tr>
+            <tr style="border-bottom: 1px solid #e1e4e8;">
+                <td style="padding: 0.5rem;">Serverless Functions</td>
+                <td style="padding: 0.5rem;">Lambda</td>
+                <td style="padding: 0.5rem;">Function App</td>
+            </tr>
+            <tr style="border-bottom: 1px solid #e1e4e8;">
+                <td style="padding: 0.5rem;">Observability</td>
+                <td style="padding: 0.5rem;">CloudWatch</td>
+                <td style="padding: 0.5rem;">App Insights</td>
+            </tr>
+            <tr style="border-bottom: 1px solid #e1e4e8;">
+                <td style="padding: 0.5rem;">Kubernetes</td>
+                <td style="padding: 0.5rem;">EKS</td>
+                <td style="padding: 0.5rem;">AKS</td>
+            </tr>
+            <tr style="border-bottom: 1px solid #e1e4e8;">
+                <td style="padding: 0.5rem;">Infrastructure as Code (IaC)</td>
+                <td style="padding: 0.5rem;">CloudFormation (YAML/JSON)</td>
+                <td style="padding: 0.5rem;">Terraform, Bicep, ARM Templates</td>
+            </tr>
+        </table>
+
         <h2>Start Reading</h2>
         <p>
             Pick a concept from the sidebar on the left. Or start with:
         </p>
         <ul style="margin-left: 2rem; margin-bottom: 1rem;">
             <li><a href="concepts/multi-tenant.html">Multi-Tenant Design</a> for architecture overview</li>
-            <li><a href="concepts/cloudformation.html">CloudFormation</a> for infrastructure as code</li>
+            <li><a href="concepts/cloudformation.html">CloudFormation</a> for AWS infrastructure as code</li>
+            <li><a href="concepts/aks.html">AKS</a> for Azure Kubernetes</li>
             <li><a href="concepts/sigv4-jwt.html">SigV4 vs JWT</a> for authentication patterns</li>
             <li><a href="cicd/docker-multiarch.html">Multi-Arch Docker Images</a> for CI/CD</li>
         </ul>

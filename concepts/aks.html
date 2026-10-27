@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AKS - Azure Concepts</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #fafbfc;
+        }
+        .container { display: flex; min-height: 100vh; }
+        aside {
+            width: 250px;
+            background: #fff;
+            border-right: 1px solid #e1e4e8;
+            padding: 2rem 1.5rem;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+        }
+        aside h1 { font-size: 1.1rem; margin-bottom: 0.5rem; font-weight: 600; }
+        aside h2 {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            color: #999;
+            margin: 1.5rem 0 0.75rem 0;
+            font-weight: 600;
+        }
+        aside ul { list-style: none; }
+        aside a {
+            text-decoration: none;
+            color: #0366d6;
+            font-size: 0.9rem;
+            display: block;
+            padding: 0.25rem 0;
+        }
+        aside a.active {
+            color: #6f42c1;
+            font-weight: 600;
+            border-left: 2px solid #6f42c1;
+            padding-left: 8px;
+        }
+        main { margin-left: 250px; padding: 3rem; flex: 1; max-width: 900px; }
+        h1 { margin-bottom: 2rem; color: #24292e; font-size: 2rem; border-bottom: 2px solid #e1e4e8; padding-bottom: 0.5rem; }
+        h2 { margin-top: 2rem; margin-bottom: 1rem; color: #24292e; font-size: 1.3rem; }
+        p { margin-bottom: 1rem; color: #555; }
+        code {
+            background: #f6f8fa;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: "Monaco", "Courier New", monospace;
+            font-size: 0.9em;
+            color: #d73a49;
+        }
+        pre {
+            background: #f6f8fa;
+            border: 1px solid #e1e4e8;
+            border-radius: 6px;
+            padding: 1rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-size: 0.85rem;
+            line-height: 1.45;
+        }
+        pre code { background: none; padding: 0; color: #24292e; }
+        .note {
+            background: #f6f8fa;
+            border-left: 4px solid #0366d6;
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 3px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+        }
+        th, td {
+            border: 1px solid #e1e4e8;
+            padding: 0.75rem;
+            text-align: left;
+        }
+        th { background: #f6f8fa; font-weight: 600; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <aside>
+        <h1>Soma Mahapatra</h1>
+        <h2>Azure Concepts</h2>
+        <ul>
+            <li><a href="/concepts/azure-function-app.html">Azure Function App</a></li>
+            <li><a href="/concepts/app-insights.html">App Insights</a></li>
+            <li><a href="/concepts/aks.html" class="active">AKS</a></li>
+        </ul>
+    </aside>
+
+    <main>
+        <h1>AKS: Azure Kubernetes Service</h1>
+
+        <h2>What It Does</h2>
+        <p>
+            AKS is Azure's managed Kubernetes service. You provide container images, Kubernetes manifests (or Helm charts), and AKS runs them across a cluster of VMs. Kubernetes orchestrates scheduling, networking, storage, and scaling.
+        </p>
+        <p>
+            Unlike Azure Functions (serverless), AKS gives you full control: custom runtimes, long-running processes, GPU workloads, stateful services.
+        </p>
+
+        <h2>Key Concepts</h2>
+        <ul style="margin-left: 2rem; margin-bottom: 1rem;">
+            <li><strong>Cluster</strong> — A set of VMs running Kubernetes. AKS manages the control plane.</li>
+            <li><strong>Node Pool</strong> — A group of VMs with the same specs. Run system pods on one pool, app pods on another.</li>
+            <li><strong>Pod</strong> — The smallest unit. One or more containers. Usually one container per pod.</li>
+            <li><strong>Deployment</strong> — Desired state. "Run 3 replicas of this image, keep them running, roll out updates."</li>
+            <li><strong>Service</strong> — Load balancing. Expose pods inside the cluster or to the internet.</li>
+        </ul>
+
+        <h2>Terraform: AKS Cluster</h2>
+        <pre><code>provider "azurerm" {
+  features {}
+}
+
+resource "azurerm_resource_group" "main" {
+  name     = "rg-aks-prod"
+  location = "East US"
+}
+
+resource "azurerm_kubernetes_cluster" "main" {
+  name                = "aks-prod-cluster"
+  location            = azurerm_resource_group.main.location
+  resource_group_name = azurerm_resource_group.main.name
+  dns_prefix          = "aks-prod"
+  kubernetes_version  = "1.27"
+
+  default_node_pool {
+    name       = "default"
+    node_count = 3
+    vm_size    = "Standard_D2s_v3"
+
+    upgrade_settings {
+      max_surge = 1
+    }
+  }
+
+  identity {
+    type = "SystemAssigned"
+  }
+
+  network_profile {
+    network_plugin = "kubenet"
+    service_cidr   = "10.0.0.0/16"
+    dns_service_ip = "10.0.0.10"
+  }
+
+  depends_on = [
+    azurerm_resource_group.main
+  ]
+}
+
+# Output kubeconfig
+output "kube_config" {
+  value     = azurerm_kubernetes_cluster.main.kube_config_raw
+  sensitive = true
+}</code></pre>
+
+        <h2>Deploy an App with Terraform + Helm</h2>
+        <p>
+            Helm is the package manager for Kubernetes. Instead of writing YAML for every resource, you use a Helm chart (pre-written templates with values).
+        </p>
+        <pre><code>provider "helm" {
+  kubernetes {
+    host                   = azurerm_kubernetes_cluster.main.kube_config.0.host
+    client_certificate     = base64decode(azurerm_kubernetes_cluster.main.kube_config.0.client_certificate)
+    client_key             = base64decode(azurerm_kubernetes_cluster.main.kube_config.0.client_key)
+    cluster_ca_certificate = base64decode(azurerm_kubernetes_cluster.main.kube_config.0.cluster_ca_certificate)
+  }
+}
+
+resource "helm_release" "api_app" {
+  name             = "api-app"
+  repository       = "https://example.com/charts"
+  chart            = "api-app"
+  namespace        = "default"
+  create_namespace = true
+
+  values = [
+    yamlencode({
+      image = {
+        repository = "example.azurecr.io/api-app"
+        tag        = var.app_version
+      }
+      replicaCount = 3
+      resources = {
+        requests = {
+          cpu    = "100m"
+          memory = "256Mi"
+        }
+        limits = {
+          cpu    = "500m"
+          memory = "512Mi"
+        }
+      }
+      autoscaling = {
+        enabled     = true
+        minReplicas = 3
+        maxReplicas = 10
+        targetCPUUtilizationPercentage = 70
+      }
+    })
+  ]
+}</code></pre>
+
+        <h2>Direct Kubernetes YAML</h2>
+        <p>
+            Or deploy Kubernetes manifests directly with Terraform:
+        </p>
+        <pre><code>resource "kubernetes_deployment" "api_app" {
+  metadata {
+    name = "api-app"
+  }
+
+  spec {
+    replicas = 3
+
+    selector {
+      match_labels = {
+        app = "api-app"
+      }
+    }
+
+    template {
+      metadata {
+        labels = {
+          app = "api-app"
+        }
+      }
+
+      spec {
+        container {
+          name  = "api-app"
+          image = "example.azurecr.io/api-app:latest"
+          port {
+            container_port = 8080
+          }
+
+          resources {
+            requests = {
+              cpu    = "100m"
+              memory = "256Mi"
+            }
+            limits = {
+              cpu    = "500m"
+              memory = "512Mi"
+            }
+          }
+
+          env {
+            name  = "ENVIRONMENT"
+            value = "production"
+          }
+          env {
+            name = "CONNECTION_STRING"
+            value_from {
+              secret_key_ref {
+                name = "app-secrets"
+                key  = "connection_string"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+resource "kubernetes_service" "api_app" {
+  metadata {
+    name = "api-app-service"
+  }
+
+  spec {
+    selector = {
+      app = "api-app"
+    }
+
+    port {
+      port        = 80
+      target_port = 8080
+    }
+
+    type = "LoadBalancer"
+  }
+}</code></pre>
+
+        <h2>AKS with App Insights</h2>
+        <p>
+            Link the cluster to App Insights for pod monitoring:
+        </p>
+        <pre><code>resource "azurerm_kubernetes_cluster" "main" {
+  # ... other config ...
+
+  oms_agent {
+    enabled                    = true
+    log_analytics_workspace_id = azurerm_log_analytics_workspace.main.id
+  }
+
+  monitor_metrics {
+    enabled = true
+  }
+}</code></pre>
+
+        <h2>Multi-Region AKS</h2>
+        <p>
+            Deploy the same app to multiple clusters (regions) for high availability:
+        </p>
+        <pre><code>variable "regions" {
+  default = ["East US", "West Europe"]
+}
+
+resource "azurerm_kubernetes_cluster" "main" {
+  for_each = toset(var.regions)
+
+  name                = "aks-${lower(replace(each.value, " ", "-"))}"
+  location            = each.value
+  # ... rest of config ...
+}</code></pre>
+
+        <h2>AKS vs Azure Functions: When to Use</h2>
+        <table>
+            <tr>
+                <th>Factor</th>
+                <th>Azure Functions</th>
+                <th>AKS</th>
+            </tr>
+            <tr>
+                <td>Execution time</td>
+                <td>Max 10 min (consumption)</td>
+                <td>Unlimited</td>
+            </tr>
+            <tr>
+                <td>Cold start</td>
+                <td>10–30 sec (consumption)</td>
+                <td>None (always-on)</td>
+            </tr>
+            <tr>
+                <td>Cost at low volume</td>
+                <td>$0.20/1M invocations</td>
+                <td>VMs cost $100+/month</td>
+            </tr>
+            <tr>
+                <td>Scaling</td>
+                <td>Automatic (to limits)</td>
+                <td>Automatic with HPA</td>
+            </tr>
+            <tr>
+                <td>Use case</td>
+                <td>Event handlers, webhooks</td>
+                <td>Always-on APIs, batch jobs, stateful apps</td>
+            </tr>
+        </table>
+
+        <div class="note">
+            <strong>Node pools:</strong> You can have multiple node pools in one cluster. For example, a system pool for kube-dns and ingress, and a workload pool for your apps. Use node affinity to schedule pods on specific pools.
+        </div>
+
+        <h2>Common Patterns</h2>
+        <ul style="margin-left: 2rem; margin-bottom: 1rem;">
+            <li><strong>API server</strong> — Deployment with 3+ replicas, LoadBalancer service, autoscaling on CPU</li>
+            <li><strong>Background job</strong> — CronJob or Job resource, runs once on schedule</li>
+            <li><strong>Stateful service</strong> — StatefulSet for databases, message queues (better do this outside AKS)</li>
+            <li><strong>Ingress controller</strong> — One ingress-nginx per cluster, routes HTTP/HTTPS to services</li>
+        </ul>
+    </main>
+</div>
+</body>
+</html>
