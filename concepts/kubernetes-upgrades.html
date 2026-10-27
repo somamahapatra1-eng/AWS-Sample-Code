@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kubernetes Cluster Upgrades - Concepts</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #fafbfc;
+        }
+        .container { display: flex; min-height: 100vh; }
+        aside {
+            width: 250px;
+            background: #fff;
+            border-right: 1px solid #e1e4e8;
+            padding: 2rem 1.5rem;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+        }
+        aside h1 { font-size: 1.1rem; margin-bottom: 0.5rem; font-weight: 600; }
+        aside h2 {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            color: #999;
+            margin: 1.5rem 0 0.75rem 0;
+            font-weight: 600;
+        }
+        aside ul { list-style: none; }
+        aside a {
+            text-decoration: none;
+            color: #0366d6;
+            font-size: 0.9rem;
+            display: block;
+            padding: 0.25rem 0;
+        }
+        aside a.active {
+            color: #6f42c1;
+            font-weight: 600;
+            border-left: 2px solid #6f42c1;
+            padding-left: 8px;
+        }
+        main { margin-left: 250px; padding: 3rem; flex: 1; max-width: 900px; }
+        h1 { margin-bottom: 2rem; color: #24292e; font-size: 2rem; border-bottom: 2px solid #e1e4e8; padding-bottom: 0.5rem; }
+        h2 { margin-top: 2rem; margin-bottom: 1rem; color: #24292e; font-size: 1.3rem; }
+        p { margin-bottom: 1rem; color: #555; }
+        code {
+            background: #f6f8fa;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: "Monaco", "Courier New", monospace;
+            font-size: 0.9em;
+            color: #d73a49;
+        }
+        pre {
+            background: #f6f8fa;
+            border: 1px solid #e1e4e8;
+            border-radius: 6px;
+            padding: 1rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-size: 0.85rem;
+            line-height: 1.45;
+        }
+        pre code { background: none; padding: 0; color: #24292e; }
+        .note {
+            background: #f6f8fa;
+            border-left: 4px solid #0366d6;
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 3px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+        }
+        th, td {
+            border: 1px solid #e1e4e8;
+            padding: 0.75rem;
+            text-align: left;
+        }
+        th { background: #f6f8fa; font-weight: 600; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <aside>
+        <h1>Soma Mahapatra</h1>
+        <h2>Kubernetes</h2>
+        <ul>
+            <li><a href="/concepts/aks.html">AKS</a></li>
+            <li><a href="/concepts/kubernetes-upgrades.html" class="active">Cluster Upgrades</a></li>
+        </ul>
+    </aside>
+
+    <main>
+        <h1>Kubernetes Cluster Upgrades: AKS & EKS</h1>
+
+        <h2>The Challenge</h2>
+        <p>
+            Kubernetes clusters need regular updates for security patches and new features. On AKS or EKS, you cannot skip minor versions (e.g., 1.33 → 1.35 is a two-hop: 1.33 → 1.34 → 1.35). The control plane and nodes must stay within one minor version of each other.
+        </p>
+        <p>
+            Upgrades touch every workload. Workload health checks, PodDisruptionBudgets, and resource constraints can block the upgrade. The strategy is: validate early, drain one node at a time, wait for workloads to reschedule, and roll back on failure.
+        </p>
+
+        <h2>AKS Upgrade (1.33 → 1.34 → 1.35)</h2>
+
+        <h3>Prerequisites</h3>
+        <ul style="margin-left: 2rem; margin-bottom: 1rem;">
+            <li>Admin SSH access to a bastion or admin node</li>
+            <li>kubeconfig valid and pointing to the target cluster</li>
+            <li>All nodes currently healthy and reachable</li>
+            <li>No unhealthy pods or resource constraints blocking drains</li>
+        </ul>
+
+        <h3>Two-Hop Upgrade Path</h3>
+        <p>
+            Azure requires upgrading one minor version at a time. If you want to go from 1.33 to 1.35:
+        </p>
+        <pre><code>1.33 (current) → 1.34 (intermediate) → 1.35 (target)</code></pre>
+
+        <p>
+            Each hop follows the same steps:
+        </p>
+        <ol style="margin-left: 2rem; margin-bottom: 1rem;">
+            <li><strong>Update control plane</strong> — Azure drains the control plane nodes and applies the update.</li>
+            <li><strong>Drain each node pool</strong> — For each node pool, cordon nodes and evict workloads gracefully.</li>
+            <li><strong>Update node images</strong> — Replace the VM image with the new Kubernetes version.</li>
+            <li><strong>Drain wait loop</strong> — Monitor node readiness. Pods reschedule to remaining nodes.</li>
+            <li><strong>Verify health</strong> — All nodes report ready. All pods running or completed.</li>
+        </ol>
+
+        <h3>Upgrade Automation Script</h3>
+        <p>
+            The aegis repo uses a Python upgrade script (`upgrade.py`) that:
+        </p>
+        <ul style="margin-left: 2rem; margin-bottom: 1rem;">
+            <li>Tracks phase state in a config file so it can resume on failure</li>
+            <li>Detects partial upgrades and skips completed phases</li>
+            <li>Handles memory pressure on crowded node pools (evicts low-priority pods)</li>
+            <li>Validates PodDisruptionBudgets before draining</li>
+            <li>Automatically remediates known failure modes (e.g., evicted pods left behind)</li>
+        </ul>
+
+        <h3>Config Structure (config.yaml)</h3>
+        <pre><code>version: 1
+cluster_name: aks-prod
+control_plane_upgrade:
+  status: completed | in_progress | pending
+  version: 1.34
+node_pool_upgrades:
+  - name: system
+    status: pending
+    version: 1.34
+    drain_complete: false
+  - name: workload
+    status: pending
+    version: 1.34
+    drain_complete: false</code></pre>
+
+        <h2>EKS Upgrade (1.33 → 1.35)</h2>
+
+        <h3>Key Differences from AKS</h3>
+        <p>
+            EKS upgrades are more hands-off but have different constraints:
+        </p>
+        <table>
+            <tr>
+                <th>Aspect</th>
+                <th>AKS</th>
+                <th>EKS</th>
+            </tr>
+            <tr>
+                <td>Control plane update</td>
+                <td>Azure manages; you trigger via CLI/portal</td>
+                <td>AWS manages; you trigger via CLI/console</td>
+            </tr>
+            <tr>
+                <td>Node update</td>
+                <td>Manual (cordon, drain, update AMI)</td>
+                <td>Auto via Launch Template (rolling replace)</td>
+            </tr>
+            <tr>
+                <td>Skip support</td>
+                <td>No — must upgrade 1.33 → 1.34 → 1.35</td>
+                <td>No — same two-hop rule</td>
+            </tr>
+            <tr>
+                <td>Workload downtime</td>
+                <td>Controlled by drain policy</td>
+                <td>Depends on PDB and replica count</td>
+            </tr>
+        </table>
+
+        <h3>EKS Upgrade Steps</h3>
+        <ol style="margin-left: 2rem; margin-bottom: 1rem;">
+            <li><strong>Check compatibility</strong> — CNI, add-ons, and workloads compatible with new version</li>
+            <li><strong>Update control plane</strong> — 
+                <code>aws eks update-cluster-version --cluster-name X --kubernetes-version 1.34</code>
+            </li>
+            <li><strong>Wait for control plane</strong> — Monitor status (takes 10–30 minutes)</li>
+            <li><strong>Update node group</strong> — Update the launch template to the new AMI</li>
+            <li><strong>Enable node group auto-scaling</strong> — New nodes from updated AMI, old nodes gradually replaced</li>
+            <li><strong>Monitor node replacement</strong> — Existing nodes are replaced one at a time</li>
+        </ol>
+
+        <div class="note">
+            <strong>PodDisruptionBudget (PDB) Blockers:</strong><br>
+            A workload with <code>minAvailable: 1</code> on a 1-replica deployment blocks draining. The drain waits forever because no pod can be evicted. Solution: Temporarily lower the PDB or increase replicas before the upgrade.
+        </div>
+
+        <h2>Terraform: IaC Version Updates</h2>
+
+        <h3>AKS Terraform</h3>
+        <pre><code>resource "azurerm_kubernetes_cluster" "main" {
+  name                = "aks-prod"
+  kubernetes_version  = "1.35"  # Update this to trigger control plane upgrade
+
+  default_node_pool {
+    name             = "default"
+    kubernetes_version = "1.35"  # Also update node pools
+  }
+}
+
+# After applying, monitor with:
+# kubectl get nodes -o wide</code></pre>
+
+        <h3>EKS Terraform</h3>
+        <pre><code>resource "aws_eks_cluster" "main" {
+  name             = "eks-prod"
+  version          = "1.35"  # Update control plane version
+
+  depends_on = [aws_iam_role_policy_attachment.eks_cluster_policy]
+}
+
+resource "aws_launch_template" "nodes" {
+  name_prefix = "eks-nodes-"
+
+  block_device_mappings {
+    device_name = "/dev/xvda"
+    ebs {
+      volume_size = 100
+      volume_type = "gp3"
+    }
+  }
+}
+
+resource "aws_eks_node_group" "workers" {
+  cluster_name    = aws_eks_cluster.main.name
+  node_group_name = "workers"
+  node_role_arn   = aws_iam_role.node_role.arn
+  subnet_ids      = var.subnet_ids
+  version         = "1.35"  # Node group version
+
+  launch_template {
+    id      = aws_launch_template.nodes.id
+    version = aws_launch_template.nodes.latest_version_number
+  }
+
+  scaling_config {
+    min_size     = 3
+    max_size     = 10
+    desired_size = 5
+  }
+
+  tags = {
+    Name = "eks-worker-nodes"
+  }
+}
+
+# After Terraform apply:
+# aws eks describe-nodegroup --cluster-name eks-prod --nodegroup-name workers | jq .nodegroup.version</code></pre>
+
+        <h2>Common Failure Modes & Fixes</h2>
+
+        <table>
+            <tr>
+                <th>Failure</th>
+                <th>Root Cause</th>
+                <th>Fix</th>
+            </tr>
+            <tr>
+                <td>Drain times out</td>
+                <td>Workload has PDB minAvailable but can't reschedule</td>
+                <td>Increase replicas or suspend PDB temporarily</td>
+            </tr>
+            <tr>
+                <td>Evicted pods left behind</td>
+                <td>Failed pods not cleaned up after drain</td>
+                <td>Script auto-cleans with `kubectl delete pod --field-selector=status.phase=Failed`</td>
+            </tr>
+            <tr>
+                <td>Quota exhausted</td>
+                <td>Cluster too full; new nodes can't be created</td>
+                <td>Request higher quota or reduce workload</td>
+            </tr>
+            <tr>
+                <td>APM blocks EKS upgrade</td>
+                <td>APM workload incompatible with new K8s version</td>
+                <td>Remove APM during upgrade or wait for APM update</td>
+            </tr>
+            <tr>
+                <td>Kafka migration fails</td>
+                <td>Zookeeper-to-KRaft migration job enabled on upgrade</td>
+                <td>Disable job or increase job resources</td>
+            </tr>
+        </table>
+
+        <h2>Monitoring an Upgrade</h2>
+        <pre><code># Watch node status
+watch kubectl get nodes -o wide
+
+# Check for stuck pods
+kubectl get pods -A --field-selector=status.phase=Pending
+
+# Verify control plane version
+kubectl version --short
+
+# Check for pod disruption budgets
+kubectl get pdb -A
+
+# Monitor events
+kubectl get events -A --sort-by=.metadata.creationTimestamp</code></pre>
+
+        <div class="note">
+            <strong>Idempotency:</strong> Both AKS and EKS upgrades are safe to retry. If the upgrade is interrupted, re-running it will skip completed phases and resume from where it stopped.
+        </div>
+    </main>
+</div>
+</body>
+</html>
