@@ -42,7 +42,27 @@
     </aside>
     <main>
         <h1>What we did with AI</h1>
-        <p>This portfolio was drafted with an AI assistant in the editor and reviewed before it was published. The assistant wrote the first version of the pages, the sample scripts, and the tests. The decisions stayed human: what was allowed to leave a work repository, which repo was private, and which plan was safe to run.</p>
+        <p>An assistant in the editor reads the work repositories, drafts the first version of an explanation or a change, and stops before anything mutates a live cluster. A person still decides what is published and what is applied.</p>
+
+        <h2>On the integration work</h2>
+        <p>The integration repository is a set of CloudFormation stacks, each with its own template and build spec.</p>
+        <ul>
+            <li><strong>Central API.</strong> API Gateway, attachment handling, and the build that packages them.</li>
+            <li><strong>Lambda stack set.</strong> The publisher function, its layers, and the template that deploys them.</li>
+            <li><strong>Teams integration.</strong> A template kept per release, so a fix is compared with the previous release instead of rewritten.</li>
+            <li><strong>Surrounding stacks.</strong> Cross-account access, a Cognito foundation template, value-metric and notification stacks, and a small generative-AI resource template.</li>
+        </ul>
+        <p>The assistant starts by naming the owning template. A question about the API does not turn into a search of the Lambda stack, and a release fix stays inside that release folder. Design notes were drafted from those templates and then accepted by a person. The work repository was not copied out.</p>
+
+        <h2>On the infrastructure work</h2>
+        <p>The infrastructure repository provisions the clusters with numbered OpenTofu modules. One config file holds the environment values. A deploy tool copies the provider file into each module, generates that module's backend, and runs init, plan, and apply as its own stack.</p>
+        <ul>
+            <li><strong>Azure foundation, then the cluster.</strong> Managed identity and private DNS zones come first. The cluster module only looks the zone up. Kubeconfig, storage class, DNS records, image trust, and the kubelet identity follow. A deprecated volume module is left out of the plan.</li>
+            <li><strong>AWS foundation, then the cluster.</strong> Identity and security groups come first, then the cluster module, a security-group patch, interface endpoints, the load balancer, DNS, the image registry, and the endpoint service. Folders marked deprecated are skipped.</li>
+            <li><strong>Gotchas the assistant checks before a plan.</strong> A node-pool label dropped in a config conversion does not fail apply, and pods then fail to schedule. Only pools that fit the regional quota are enabled. On a release upgrade, the existing config is merged into the new template before deploy.</li>
+            <li><strong>Upgrades.</strong> The path is one minor version at a time. A runbook lists the pre-checks and the known failures. A live upgrade waits for approval.</li>
+        </ul>
+        <p>That is the efficiency. The numbered folders already answer "what runs before the cluster." The assistant computes the hop list and the pre-checks from that layout. It does not get a standing order to apply.</p>
 
         <h2>What got built</h2>
         <ul>
@@ -65,6 +85,8 @@
 
         <h2>How that was more efficient</h2>
         <ul>
+            <li><strong>The first hour was orientation, and it got shorter.</strong> Stack folders and numbered modules name the owner of a change before anyone edits. Review starts at the right template.</li>
+            <li><strong>Known failures are checked before a cloud call.</strong> Label drift, quota, a closed disruption budget, and a version jump of more than one minor are caught in the plan. A bad plan fails without a subscription.</li>
             <li><strong>The first draft was the slow part, and it moved.</strong> A page, a script, and its tests arrived together. Review time went to correctness, not to a blank file.</li>
             <li><strong>One shape was reused.</strong> The upgrade scripts share the same hop rules. The interview pages share one layout. The cost scripts share the same dry-run habit. The second page did not start from zero.</li>
             <li><strong>Checks ran before a cloud call.</strong> Unit tests use fake clients. A version sequence or a closed budget fails in a second, with no subscription and no cluster.</li>
