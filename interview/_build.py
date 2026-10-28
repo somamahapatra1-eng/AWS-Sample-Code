@@ -27,6 +27,7 @@ NAV = """
             <li><a href="devops.html"{devops}>DevOps</a></li>
             <li><a href="git.html"{git}>Git</a></li>
             <li><a href="cloudops.html"{cloudops}>CloudOps</a></li>
+            <li><a href="security.html">Security scans</a></li>
         </ul>
         <h2>Back</h2>
         <ul>

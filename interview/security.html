@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Security scans</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; line-height: 1.6; color: #333; background: #fafbfc; }
+        .container { display: flex; min-height: 100vh; }
+        aside { width: 250px; background: #fff; border-right: 1px solid #e1e4e8; padding: 2rem 1.5rem; position: fixed; height: 100vh; overflow-y: auto; }
+        aside h1 { font-size: 1.1rem; margin-bottom: 0.5rem; }
+        aside h1 a { color: #24292e; text-decoration: none; }
+        aside p { font-size: 0.85rem; color: #666; margin-bottom: 1rem; }
+        aside h2 { font-size: 0.75rem; text-transform: uppercase; color: #999; margin: 1.5rem 0 0.75rem; }
+        aside ul { list-style: none; }
+        aside a { text-decoration: none; color: #0366d6; font-size: 0.9rem; display: block; padding: 0.25rem 0; }
+        aside a.active { color: #6f42c1; font-weight: 600; border-left: 2px solid #6f42c1; padding-left: 8px; }
+        main { margin-left: 250px; padding: 3rem; flex: 1; max-width: 920px; }
+        h1 { margin-bottom: 1rem; font-size: 2rem; border-bottom: 2px solid #e1e4e8; padding-bottom: 0.5rem; }
+        h2 { margin-top: 2.5rem; margin-bottom: 1rem; font-size: 1.4rem; }
+        h3 { margin-top: 1.5rem; margin-bottom: 0.5rem; font-size: 1.1rem; }
+        p, li { color: #444; }
+        p { margin-bottom: 1rem; }
+        ul, ol { margin: 0 0 1rem 1.5rem; }
+        li { margin: 0.35rem 0; }
+        code { background: #f6f8fa; padding: 2px 6px; border-radius: 3px; font-size: 0.9em; }
+        table { width: 100%; border-collapse: collapse; margin: 1rem 0 1.5rem; background: #fff; }
+        th, td { border: 1px solid #e1e4e8; padding: 0.75rem; text-align: left; vertical-align: top; }
+        th { background: #f6f8fa; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <aside>
+        <h1><a href="../index.html">Soma Mahapatra</a></h1>
+        <p>Interview questions with answers, beginner through advanced.</p>
+        <h2>Interview</h2>
+        <ul>
+            <li><a href="aks.html">AKS</a></li>
+            <li><a href="eks.html">EKS</a></li>
+            <li><a href="terraform.html">Terraform</a></li>
+            <li><a href="docker.html">Docker</a></li>
+            <li><a href="kubernetes.html">Kubernetes</a></li>
+            <li><a href="devops.html">DevOps</a></li>
+            <li><a href="git.html">Git</a></li>
+            <li><a href="cloudops.html">CloudOps</a></li>
+            <li><a href="security.html" class="active">Security scans</a></li>
+        </ul>
+        <h2>Back</h2>
+        <ul>
+            <li><a href="../index.html">Home</a></li>
+        </ul>
+    </aside>
+    <main>
+        <h1>Security scans</h1>
+        <p>These six scans look at different things. None of them replaces the others. A clean Sonar gate does not mean the container image is safe, and a clean image scan does not mean the source is free of an injection bug.</p>
+
+        <table>
+            <tr>
+                <th>Scan</th>
+                <th>What it reads</th>
+                <th>What a failure means</th>
+            </tr>
+            <tr>
+                <td>2ms</td>
+                <td>Files and Git history</td>
+                <td>A secret is in the tree. Rotate it. Deleting the line is not enough.</td>
+            </tr>
+            <tr>
+                <td>Checkmarx</td>
+                <td>Source code</td>
+                <td>A path from untrusted input to a dangerous call, such as SQL, a command, or HTML.</td>
+            </tr>
+            <tr>
+                <td>Sonar</td>
+                <td>Source code, tests, coverage</td>
+                <td>The quality gate failed: new bugs, vulnerabilities, hotspots, or coverage below the bar.</td>
+            </tr>
+            <tr>
+                <td>Black Duck</td>
+                <td>Lockfiles, binaries, and signatures</td>
+                <td>An open-source component has a known vulnerability, or a license the policy forbids.</td>
+            </tr>
+            <tr>
+                <td>FOSS</td>
+                <td>The open-source inventory</td>
+                <td>A component is not approved, or its license obligations are not met.</td>
+            </tr>
+            <tr>
+                <td>Twistlock</td>
+                <td>Container images, hosts, and runtime</td>
+                <td>The image has a vulnerability over the threshold, malware, or a compliance break.</td>
+            </tr>
+        </table>
+
+        <h2>Where they sit in a pipeline</h2>
+        <ol>
+            <li><strong>2ms</strong> on the commit, including history added by the branch. Stop before you compile secrets into an artifact.</li>
+            <li><strong>Checkmarx</strong> and <strong>Sonar</strong> on the source. They can run in parallel.</li>
+            <li><strong>Black Duck</strong> on the dependency lockfile or the built packages. <strong>FOSS</strong> uses that inventory for the license decision.</li>
+            <li>Build the image from the commit that passed those gates.</li>
+            <li><strong>Twistlock</strong> on that image. Deploy only the digest that passed.</li>
+        </ol>
+        <p>A waiver needs an owner and an expiry. A finding marked "not exploitable" with no reason will still be there on the next audit.</p>
+
+        <h2>2ms</h2>
+        <p>2ms is Checkmarx's secret scanner. The name is short for "too many secrets." It looks for API keys, tokens, passwords, and private keys in files and in Git history.</p>
+        <ul>
+            <li>Run it on the pull request and on a schedule over the default branch. A secret committed last year is still a secret.</li>
+            <li>A match in history means rotate the credential, then rewrite or expire the old commit only as a second step. Rotation is the step that stops use of the leaked value.</li>
+            <li>High-entropy strings and known token prefixes are the usual rules. A test fixture that looks like a key should be a fake value in an allow-list, not a real key with an ignore comment.</li>
+            <li>Do not print the secret in the job log. The report should show the file, the commit, and the rule name.</li>
+        </ul>
+
+        <h2>Checkmarx</h2>
+        <p>Checkmarx SAST reads source and builds a data-flow graph. It asks whether untrusted input can reach a sink: a query, a shell, a file path, or a page. It does not run the program.</p>
+        <ul>
+            <li>A result names the query, the severity, the source, and the sink. Triage it. "Not exploitable" is valid when the path cannot be hit. "Confirmed" means fix the code.</li>
+            <li>A full scan covers the project. An incremental scan covers the change and is faster. Use a full scan on a schedule so deleted-file findings and older branches do not hide.</li>
+            <li>It is weak on vulnerabilities that exist only in a compiled dependency. That is Black Duck's job. It is also weak on a secret sitting in a config file. That is 2ms.</li>
+            <li>The scan is only as good as the language pack and the queries you enabled. A project with no preset for its language will look clean and prove nothing.</li>
+        </ul>
+
+        <h2>Sonar</h2>
+        <p>SonarQube, or SonarCloud, analyzes source for bugs, vulnerabilities, security hotspots, code smells, duplication, and coverage. The scanner runs in CI and uploads a report. The server applies a quality gate.</p>
+        <ul>
+            <li>A vulnerability is a finding Sonar is willing to call unsafe. A security hotspot is a place a human must review, such as a cookie flag or a regex that might be catastrophic. Hotspots do not fail the gate until someone marks them or the gate counts unreviewed hotspots.</li>
+            <li>A useful gate is about <em>new</em> code: no new blocker or critical issues, and coverage on new lines above a threshold. Failing the whole legacy tree on day one teaches people to bypass the gate.</li>
+            <li>Coverage comes from the test report you pass in. A gate of 80 percent with no test report is a gate of zero, and the job should fail for a missing report, not pass as "no data."</li>
+            <li>Sonar and Checkmarx overlap on some injection bugs. Keep both if Checkmarx is the deeper data-flow scan and Sonar is the gate the whole team already watches. Do not treat a Sonar pass as an image scan.</li>
+        </ul>
+
+        <h2>Black Duck</h2>
+        <p>Black Duck is software composition analysis from Synopsys. It identifies open-source components and matches them to known vulnerabilities and licenses.</p>
+        <ul>
+            <li>The accurate path is the package manager: <code>pom.xml</code>, <code>package-lock.json</code>, <code>go.sum</code>, <code>requirements.txt</code>, or a Gradle lock. Signature and snippet scans catch copies that are not declared. They also produce more noise.</li>
+            <li>Each component is a name, a version, and the places it was found. A vulnerability is tied to that version. The fix is usually a version bump, then a rebuild, then a rescan. Editing the report does not patch the library.</li>
+            <li>License risk is separate from the CVE. A library can be vulnerability-free and still be a strong copyleft license you are not allowed to ship. Policy should fail the build on both a severity threshold and a forbidden license.</li>
+            <li>The bill of materials from this scan is what the FOSS review reads. If Black Duck cannot see a transitive dependency, the FOSS inventory is incomplete too.</li>
+        </ul>
+
+        <h2>FOSS</h2>
+        <p>A FOSS scan is the open-source compliance pass. FOSS means free and open source software. The question is not only "is there a CVE?" It is "are we allowed to ship this, and what must we do if we do?"</p>
+        <ul>
+            <li>Every third-party component needs a license, a version, and a decision: approved, approved with obligations, or rejected.</li>
+            <li>Obligations depend on the license. MIT and Apache want attribution and the license text. LGPL and GPL can require source offers or restrictions on how you link. A proprietary product that statically links GPL code is a legal problem, not a scanner tuning problem.</li>
+            <li>Tools that do this job include Black Duck's license view, FOSSA, and FOSSology. The scan output is an inventory plus notices. Shipping without the notices file fails the obligation even when the security scan is green.</li>
+            <li>A new library is a request, not a drive-by add in a pull request. The scan on main should match the lockfile you released. A dependency added after the FOSS approval is an unscanned component.</li>
+        </ul>
+
+        <h2>Twistlock</h2>
+        <p>Twistlock is the container security product Palo Alto Networks folded into Prisma Cloud Compute. People still say Twistlock for the image scan. It inspects images, registry contents, hosts, and what containers do at runtime.</p>
+        <ul>
+            <li>The CI scan runs after the image is built and before it is deployed. The usual CLI is <code>twistcli</code>. The scan is of a digest. Tag <code>latest</code> is not an identity.</li>
+            <li>Findings are OS packages and language packages in the image layers, plus malware and compliance checks such as running as root or a missing health check. A vulnerability in a base image is fixed by rebuilding on a patched base, not by a source change.</li>
+            <li>Set a fail threshold, for example critical and high with a vendor fix available. An unscored finding and a finding with no fix need a documented exception, not a silent pass.</li>
+            <li>Registry scan watches images already pushed, including ones CI did not build. Runtime defenders on the nodes watch process, network, and file behavior. That is a different control from the build gate. A cluster with no defender is not "covered by Twistlock" just because CI scanned the image once.</li>
+            <li>Scan the image you deploy. Scanning a Dockerfile, or an intermediate stage that still contains the compiler, answers a different question.</li>
+        </ul>
+
+        <h2>How to read a red build</h2>
+        <ul>
+            <li><strong>2ms red.</strong> Rotate the secret first. Then remove it from the tree and from history as far as you can.</li>
+            <li><strong>Checkmarx red.</strong> Open the path. If user input reaches the sink, fix the code. If the path is dead, mark it not exploitable and say why.</li>
+            <li><strong>Sonar red.</strong> The gate names the condition. New vulnerability: fix it. Coverage drop: add a test. Unreviewed hotspot: review it. Do not raise the leak period to make the gate green.</li>
+            <li><strong>Black Duck red.</strong> Upgrade the component. If the fix is not out, confirm the vulnerable code is not reachable, record the exception, and put a date on it.</li>
+            <li><strong>FOSS red.</strong> Do not ship. Swap the library, comply with the license, or get an approval. A security waiver does not approve a license.</li>
+            <li><strong>Twistlock red.</strong> Rebuild the image on a patched base or an upgraded package. Deploy the new digest. The old digest stays unscanned-as-passed forever.</li>
+        </ul>
+    </main>
+</div>
+</body>
+</html>
