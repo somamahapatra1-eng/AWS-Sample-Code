@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>What we built with AI</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; line-height: 1.6; color: #333; background: #fafbfc; }
+        .container { display: flex; min-height: 100vh; }
+        aside { width: 250px; background: #fff; border-right: 1px solid #e1e4e8; padding: 2rem 1.5rem; position: fixed; height: 100vh; overflow-y: auto; }
+        aside h1 { font-size: 1.1rem; margin-bottom: 0.5rem; }
+        aside h1 a { color: #24292e; text-decoration: none; }
+        aside p { font-size: 0.85rem; color: #666; margin-bottom: 1rem; }
+        aside h2 { font-size: 0.75rem; text-transform: uppercase; color: #999; margin: 1.5rem 0 0.75rem; }
+        aside ul { list-style: none; }
+        aside a { text-decoration: none; color: #0366d6; font-size: 0.9rem; display: block; padding: 0.25rem 0; }
+        aside a.active { color: #6f42c1; font-weight: 600; border-left: 2px solid #6f42c1; padding-left: 8px; }
+        main { margin-left: 250px; padding: 3rem; flex: 1; max-width: 920px; }
+        h1 { margin-bottom: 1rem; font-size: 2rem; border-bottom: 2px solid #e1e4e8; padding-bottom: 0.5rem; }
+        h2 { margin-top: 2.5rem; margin-bottom: 1rem; font-size: 1.4rem; }
+        p, li { color: #444; }
+        p { margin-bottom: 1rem; }
+        ul { margin: 0 0 1rem 1.5rem; }
+        li { margin: 0.4rem 0; }
+        a { color: #0366d6; }
+        code { background: #f6f8fa; padding: 2px 6px; border-radius: 3px; font-size: 0.9em; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <aside>
+        <h1><a href="index.html">Soma Mahapatra</a></h1>
+        <p>AWS integration engineer. Multi-tenant APIs, cloud infrastructure, CI/CD pipelines.</p>
+        <h2>This site</h2>
+        <ul>
+            <li><a href="with-ai.html" class="active">Built with AI</a></li>
+            <li><a href="interview/security.html">Security scans</a></li>
+            <li><a href="interview/kubernetes.html">Interview questions</a></li>
+            <li><a href="index.html">Home</a></li>
+        </ul>
+    </aside>
+    <main>
+        <h1>What we did with AI</h1>
+        <p>This portfolio was drafted with an AI assistant in the editor and reviewed before it was published. The assistant wrote the first version of the pages, the sample scripts, and the tests. The decisions stayed human: what was allowed to leave a work repository, which repo was private, and which plan was safe to run.</p>
+
+        <h2>What got built</h2>
+        <ul>
+            <li><strong>This site.</strong> A sidebar of concept pages for AWS, Azure, and CI/CD, plus later pages for interviews and security scans.</li>
+            <li><strong>Profile README.</strong> A public summary of the skills, kept in the profile repository so the GitHub home page stays in the person's own words.</li>
+            <li><strong><a href="https://github.com/somamahapatra1-eng/harbor-events-sample">harbor-events-sample</a>.</strong> An original multi-tenant event API: nested stacks, SigV4 and JWT, routing, and a two-region pipeline. The names and account ids in it are fictional.</li>
+            <li><strong><a href="https://github.com/somamahapatra1-eng/multiarch-image-ci">multiarch-image-ci</a>.</strong> A cloud-agnostic pipeline that builds amd64 and arm64 images and publishes one manifest.</li>
+            <li><strong><a href="https://github.com/somamahapatra1-eng/aks-eks-upgrade-sample">aks-eks-upgrade-sample</a>.</strong> A private planner for AKS and EKS. It walks one minor at a time, stops a node move when a PodDisruptionBudget allows no eviction, and calls Azure or AWS only when <code>--execute</code> is passed. The write-ups cover the upgrade, the budgets, and the infrastructure phases.</li>
+            <li><strong><a href="https://github.com/somamahapatra1-eng/Cloud_CostSaving">Cloud_CostSaving</a>.</strong> Original scripts for idle-cloud cost: image expiry, unattached disks, nightly start and stop, and cluster scale-down. A normal run prints the plan.</li>
+            <li><strong>Interview pages.</strong> Eight topics, 100 answered questions each, split into beginner, intermediate, and advanced: AKS, EKS, Terraform, Docker, Kubernetes, DevOps, Git, and CloudOps.</li>
+            <li><strong><a href="interview/security.html">Security scans</a>.</strong> Twistlock, Black Duck, FOSS, 2ms, Checkmarx, and Sonar, and why a pass on one does not clear the others.</li>
+        </ul>
+
+        <h2>What stayed out</h2>
+        <ul>
+            <li>Work repositories were read to understand the problem, then left where they were. The published scripts are new, not a copy of an internal tool.</li>
+            <li>Customer names, real account ids, certificates, and internal host names are not in these repos.</li>
+            <li>Anything that deletes or upgrades a live cluster is behind an explicit flag. The default command only prints a plan.</li>
+        </ul>
+
+        <h2>How that was more efficient</h2>
+        <ul>
+            <li><strong>The first draft was the slow part, and it moved.</strong> A page, a script, and its tests arrived together. Review time went to correctness, not to a blank file.</li>
+            <li><strong>One shape was reused.</strong> The upgrade scripts share the same hop rules. The interview pages share one layout. The cost scripts share the same dry-run habit. The second page did not start from zero.</li>
+            <li><strong>Checks ran before a cloud call.</strong> Unit tests use fake clients. A version sequence or a closed budget fails in a second, with no subscription and no cluster.</li>
+            <li><strong>Explanations stayed next to the code.</strong> Chat answers were written into the repo as point lists, so the next session did not depend on remembering the thread.</li>
+            <li><strong>Scope stayed narrow.</strong> A request for a write-up became a page. A request for a live call became a flag. The assistant did not get a standing order to change production.</li>
+            <li><strong>The human still approved the publish.</strong> Efficiency here is a shorter path from idea to a reviewed commit. It is not an unattended deploy.</li>
+        </ul>
+    </main>
+</div>
+</body>
+</html>
