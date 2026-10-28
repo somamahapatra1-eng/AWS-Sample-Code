@@ -56,6 +56,16 @@
         <h1>Security scans</h1>
         <p>These six scans look at different things. None of them replaces the others. A clean Sonar gate does not mean the container image is safe, and a clean image scan does not mean the source is free of an injection bug.</p>
 
+        <h2>Why they are not interchangeable</h2>
+        <ul>
+            <li><strong>2ms</strong> scans files and Git history for secrets. A hit means rotate the credential. Removing the line is not enough.</li>
+            <li><strong>Checkmarx</strong> is static analysis. It follows untrusted input to a dangerous call, such as SQL, a shell, or HTML.</li>
+            <li><strong>Sonar</strong> is the quality gate: new bugs, vulnerabilities, security hotspots, and coverage on the scanner report.</li>
+            <li><strong>Black Duck</strong> is composition analysis. It matches open-source components to known vulnerabilities and license rules.</li>
+            <li><strong>FOSS</strong> is the license decision on that inventory: whether you may ship the component, and what attribution or source obligations come with it.</li>
+            <li><strong>Twistlock</strong> (Prisma Cloud Compute) scans the built image digest, and can also watch hosts and runtime. A clean source scan does not clear the image.</li>
+        </ul>
+
         <table>
             <tr>
                 <th>Scan</th>
