@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multi-stage CI/CD pipeline</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; line-height: 1.6; color: #333; background: #fafbfc; }
+        .container { display: flex; min-height: 100vh; }
+        aside { width: 250px; background: #fff; border-right: 1px solid #e1e4e8; padding: 2rem 1.5rem; position: fixed; height: 100vh; overflow-y: auto; }
+        aside h1 { font-size: 1.1rem; margin-bottom: 0.5rem; }
+        aside h1 a { color: #24292e; text-decoration: none; }
+        aside p { font-size: 0.85rem; color: #666; margin-bottom: 1rem; }
+        aside h2 { font-size: 0.75rem; text-transform: uppercase; color: #999; margin: 1.5rem 0 0.75rem; }
+        aside ul { list-style: none; }
+        aside a { text-decoration: none; color: #0366d6; font-size: 0.9rem; display: block; padding: 0.25rem 0; }
+        aside a.active { color: #6f42c1; font-weight: 600; border-left: 2px solid #6f42c1; padding-left: 8px; }
+        main { margin-left: 250px; padding: 3rem; flex: 1; max-width: 920px; }
+        h1 { margin-bottom: 1rem; font-size: 2rem; border-bottom: 2px solid #e1e4e8; padding-bottom: 0.5rem; }
+        h2 { margin-top: 2.5rem; margin-bottom: 1rem; font-size: 1.4rem; }
+        p, li { color: #444; }
+        p { margin-bottom: 1rem; }
+        ul { margin: 0 0 1rem 1.5rem; }
+        li { margin: 0.4rem 0; }
+        a { color: #0366d6; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <aside>
+        <h1><a href="../index.html">Soma Mahapatra</a></h1>
+        <p>AWS integration engineer. Multi-tenant APIs, cloud infrastructure, CI/CD pipelines.</p>
+        <h2>CI/CD</h2>
+        <ul>
+            <li><a href="pipeline-stages.html" class="active">Pipeline stages</a></li>
+            <li><a href="docker-multiarch.html">Multi-Arch Docker Images</a></li>
+            <li><a href="qemu-runners.html">QEMU &amp; Runners</a></li>
+            <li><a href="packaging-s3.html">Packaging &amp; S3 Upload</a></li>
+            <li><a href="../index.html">Home</a></li>
+        </ul>
+    </aside>
+    <main>
+        <h1>Multi-stage CI/CD pipeline</h1>
+        <p>A multi-stage CI/CD pipeline starts with a trigger, then moves code through fixed steps. Each step must succeed before the next one starts.</p>
+
+        <h2>Trigger</h2>
+        <p>An event starts the pipeline. Nothing runs until a trigger fires.</p>
+        <ul>
+            <li><strong>Code push.</strong> A commit or merge to a branch starts the pipeline. This is the most common trigger.</li>
+            <li><strong>Pull request.</strong> Opening or updating a merge request starts build and test only. Deploy waits until the change is merged.</li>
+            <li><strong>Tag or release.</strong> Creating a version tag starts a release pipeline, often for production.</li>
+            <li><strong>Schedule.</strong> A timer starts the pipeline at a fixed time, such as every night.</li>
+            <li><strong>Manual.</strong> A person starts the pipeline from the tool. This is used for a controlled release.</li>
+            <li><strong>Webhook.</strong> Another system sends an event, and that event starts the pipeline.</li>
+        </ul>
+
+        <h2>Source</h2>
+        <p>After the trigger, the pipeline takes the code from the repository and saves it as an input.</p>
+
+        <h2>Build</h2>
+        <p>The pipeline compiles or packages that code. It produces a build artifact that later stages can use.</p>
+
+        <h2>Test</h2>
+        <p>Automated checks run on the build. The pipeline stops here if tests fail.</p>
+
+        <h2>Deploy</h2>
+        <p>The tested artifact is released to the target environment, such as development, staging, or production.</p>
+
+        <h2>Order</h2>
+        <p>The trigger runs the pipeline once. After that, Source, Build, Test, and Deploy run one after another.</p>
+
+        <h2>Stop on failure</h2>
+        <p>If any stage fails, later stages do not run.</p>
+
+        <h2>Artifacts</h2>
+        <p>Each stage passes its output to the next stage through shared storage.</p>
+
+        <h2>CI vs CD</h2>
+        <p>Build and test are continuous integration. Deploy is continuous delivery.</p>
+    </main>
+</div>
+</body>
+</html>
